@@ -1,0 +1,85 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.pablolamtenzan</groupId>
+    <artifactId>error-or</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>ErrorOr</name>
+    <description>An ErrorOr implementation for Java</description>
+    <url>https://github.com/pablo-lamtenzan/error-or-java</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>pablo-lamtenzan</id>
+            <name>Pablo Lamtenzan</name>
+            <email>pablolamtenzan.dev@proton.me</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/pablo-lamtenzan/error-or-java</url>
+        <connection>scm:git@github.com:pablo-lamtenzan/error-or-java.git</connection>
+        <developerConnection>scm:git@github.com:pablo-lamtenzan/error-or-java.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/pablo-lamtenzan/error-or-java/issues</url>
+    </issueManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <gpg.keyname>${env.GPG_KEY_NAME}</gpg.keyname>
+    </properties>
+
+    <build>
+        <finalName>error-or</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6.7</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <keyname>${env.GPG_KEY_NAME}</keyname>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
