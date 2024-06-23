@@ -1,0 +1,77 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'signing'
+}
+
+group = 'com.pablolamtenzan'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'ErrorOr'
+                description = 'An ErrorOr implementation for Java'
+                url = 'https://github.com/pablo-lamtenzan/error-or-java'
+
+                licenses {
+                    license {
+                        name = 'Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+                        distribution = 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'pablo-lamtenzan'
+                        name = 'Pablo Lamtenzan'
+                        email = 'pablolamtenzan.dev@proton.me'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git@github.com:pablo-lamtenzan/error-or-java.git'
+                    developerConnection = 'scm:git@github.com:pablo-lamtenzan/error-or-java.git'
+                    url = 'https://github.com/pablo-lamtenzan/error-or-java'
+                }
+
+                issueManagement {
+                    system = 'GitHub'
+                    url = 'https://github.com/pablo-lamtenzan/error-or-java/issues'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/pablo-lamtenzan/error-or-java')
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.mavenJava
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    sourceCompatibility = '17'
+    targetCompatibility = '17'
+}
