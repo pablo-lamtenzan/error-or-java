@@ -1,16 +1,18 @@
 <div align="center">
 
 [![Maven Central](https://img.shields.io/maven-central/v/dev.pablolamtenzan/error-or.svg)](https://search.maven.org/artifact/dev.pablolamtenzan/error-or)
-[![Build](https://github.com/pablo-lamtenzan/error-or-java/actions/workflows/build.yml/badge.svg)](https://github.com/pablo-lamtenzan/error-or-java/actions/workflows/build.yml) 
+[![Build](https://github.com/pablo-lamtenzan/error-or-java/actions/workflows/build.yml/badge.svg)](https://github.com/pablo-lamtenzan/error-or-java/actions/workflows/build.yml)
 [![Publish](https://github.com/pablo-lamtenzan/error-or-java/actions/workflows/publish.yml/badge.svg)](https://github.com/pablo-lamtenzan/error-or-java/actions/workflows/publish.yml)
-[![GitHub contributors](https://img.shields.io/github/contributors/pablo-lamtenzan/error-or-java)](https://github.com/pablo-lamtenzan/error-or-java/graphs/contributors/) 
-[![GitHub Stars](https://img.shields.io/github/stars/pablo-lamtenzan/error-or-java.svg)](https://github.com/pablo-lamtenzan/error-or-java/stargazers) 
+[![GitHub contributors](https://img.shields.io/github/contributors/pablo-lamtenzan/error-or-java)](https://github.com/pablo-lamtenzan/error-or-java/graphs/contributors/)
+[![GitHub Stars](https://img.shields.io/github/stars/pablo-lamtenzan/error-or-java.svg)](https://github.com/pablo-lamtenzan/error-or-java/stargazers)
 [![GitHub license](https://img.shields.io/github/license/pablo-lamtenzan/error-or-java)](https://github.com/pablo-lamtenzan/error-or-java/blob/main/LICENSE)
 [![codecov](https://codecov.io/github/pablo-lamtenzan/error-or-java/graph/badge.svg?token=E1HR4A7D15)](https://codecov.io/github/pablo-lamtenzan/error-or-java)
 
+</div>
+
 ---
 
-### A simple, fluent discriminated union of an error or a result for Java.
+### A simple, fluent discriminated union of an error or a result for Java
 
 ```xml
 <dependency>
@@ -23,8 +25,6 @@
 ```groovy
 implementation 'dev.pablolamtenzan:error-or:1.0.0'
 ```
-
-</div>
 
 ## Table of Contents
 
@@ -105,4 +105,4 @@ This project was inspired by the original [ErrorOr project in C#](https://github
 
 ## License 🪪
 
-This project is licensed under the terms of the [Apache-2.0](https://github.com/pablo-lamtenzan/error-or-java/blob/main/LICENSE) license.
+This project is licensed under the terms of the [MIT](https://github.com/pablo-lamtenzan/error-or-java/blob/main/LICENSE) license.
