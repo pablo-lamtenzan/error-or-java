@@ -1,0 +1,59 @@
+# Ignore build output directories
+/target
+/bin
+/build
+
+# Ignore Maven wrapper files
+/.mvn
+/mvnw
+/mvnw.cmd
+
+# Ignore Gradle wrapper files
+/gradle
+/gradlew
+/gradlew.bat
+
+# Ignore IDE specific files
+/.idea
+*.iml
+*.iws
+*.ipr
+/.vscode
+
+# Ignore log files and temporary files
+*.log
+*.tmp
+
+# Ignore dependency directories
+/.m2
+/.gradle
+/node_modules
+
+# Ignore documentation files
+/docs
+/site
+
+# Ignore generated files
+*.class
+*.jar
+*.war
+*.ear
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore configuration files
+/application.properties
+/application.yml
+
+# Ignore test reports
+/test-output
+/surefire-reports
+
+# Ignore specific file types
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
