@@ -1,4 +1,4 @@
-name: Publish ErrorOr to Maven Central and GitHub Packages
+name: Build ErrorOr
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
       - "src/**"
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,16 +38,7 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Build and deploy to Maven Central
-        run: mvn deploy -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+      - name: Build
+        run: mvn clean verify
         env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-
-      - name: Publish to GitHub Packages
-        run: ./gradlew publish
-        env:
-          GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

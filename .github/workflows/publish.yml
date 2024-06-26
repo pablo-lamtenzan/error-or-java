@@ -38,16 +38,28 @@ jobs:
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Build and deploy to Maven Central
-        run: mvn deploy -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+      - name: Build and Test
+        run: |
+          export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
+          mvn clean verify
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Deploy to Maven Central
+        if: success()
+        run: |
+          export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
+          mvn deploy
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Publish to GitHub Packages
-        run: ./gradlew publish
+        if: success()
+        run: |
+          export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
+          mvn deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/pablo-lamtenzan/error-or-java
         env:
-          GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
