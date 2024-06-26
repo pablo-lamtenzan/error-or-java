@@ -28,10 +28,8 @@ jobs:
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: Set up GPG
+      - name: Configure GPG
         run: |
-          gpg --export-secret-keys > /tmp/private-key.asc
-          gpg --batch --import /tmp/private-key.asc
           echo "use-agent" >> ~/.gnupg/gpg.conf
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           echo RELOADAGENT | gpg-connect-agent
