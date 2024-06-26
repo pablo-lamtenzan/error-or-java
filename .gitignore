@@ -17,3 +17,4 @@ target/
 
 # Others
 .DS_Store
+private-key.asc
