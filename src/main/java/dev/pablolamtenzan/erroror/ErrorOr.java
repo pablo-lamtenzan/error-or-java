@@ -1,4 +1,4 @@
-package main.java.com.pablolamtenzan.erroror;
+package dev.pablolamtenzan.erroror;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +49,6 @@ import java.util.stream.StreamSupport;
  * @author Pablo Lamtenzan
  */
 public interface ErrorOr<T> {
-
     /**
      * Constructs an instance representing a successful value.
      *
@@ -59,18 +58,6 @@ public interface ErrorOr<T> {
      */
     static <U> ErrorOr<U> of(U value) {
         return new Success<>(value);
-    }
-
-    /**
-     * Constructs an instance representing an error.
-     *
-     * @param error The error.
-     * @param <U>   The type of the value.
-     * @return A new instance representing the error.
-     * @see Error
-     */
-    static <U> ErrorOr<U> ofError(Error error) {
-        return new Failure<>(error);
     }
 
     /**
@@ -96,7 +83,7 @@ public interface ErrorOr<T> {
     static <U> ErrorOr<U> ofError(Iterable<Error> errors) {
         return new Failure<>(errors);
     }
-    
+
     /**
      * Checks if the instance represents an error.
      *
@@ -137,7 +124,10 @@ public interface ErrorOr<T> {
      * @return The result of applying either the error function or the value function.
      * @see Error
      */
-    default <R> R match(Function<List<Error>, ? extends R> onError, Function<? super T, ? extends R> onValue) {
+    default <R> R match(
+        Function<List<Error>, ? extends R> onError,
+        Function<? super T, ? extends R> onValue
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.match : onError is null");
         Objects.requireNonNull(onValue, "ErrorOr<T>.match : onValue is null");
 
@@ -156,11 +146,17 @@ public interface ErrorOr<T> {
      * @return A CompletableFuture representing the result of applying either the error function or the value function.
      * @see Error
      */
-    default <R> CompletableFuture<R> matchAsync(Function<List<Error>, ? extends R> onError, Function<? super T, ? extends R> onValue) {
+    default <R> CompletableFuture<R> matchAsync(
+        Function<List<Error>, ? extends CompletableFuture<R>> onError,
+        Function<? super T, ? extends CompletableFuture<R>> onValue
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.matchAsync : onError is null");
         Objects.requireNonNull(onValue, "ErrorOr<T>.matchAsync : onValue is null");
 
-        return CompletableFuture.supplyAsync(() -> this.match(onError, onValue));
+        if (this.isError()) {
+            return onError.apply(this.errors());
+        }
+        return onValue.apply(this.value());
     }
 
     /**
@@ -172,7 +168,10 @@ public interface ErrorOr<T> {
      * @return The result of applying either the error function or the value function.
      * @see Error
      */
-    default <R> R matchFirst(Function<Error, ? extends R> onError, Function<? super T, ? extends R> onValue) {
+    default <R> R matchFirst(
+        Function<Error, ? extends R> onError,
+        Function<? super T, ? extends R> onValue
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.matchFirst : onError is null");
         Objects.requireNonNull(onValue, "ErrorOr<T>.matchFirst : onValue is null");
 
@@ -191,11 +190,18 @@ public interface ErrorOr<T> {
      * @return A CompletableFuture representing the result of applying either the error function or the value function.
      * @see Error
      */
-    default <R> CompletableFuture<R> matchFirstAsync(Function<Error, ? extends R> onError, Function<? super T, ? extends R> onValue) {
+    default <R> CompletableFuture<R> matchFirstAsync(
+        Function<Error, ? extends CompletableFuture<R>> onError,
+        Function<? super T, ? extends CompletableFuture<R>> onValue
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.matchFirstAsync : onError is null");
         Objects.requireNonNull(onValue, "ErrorOr<T>.matchFirstAsync : onValue is null");
 
-        return CompletableFuture.supplyAsync(() -> this.matchFirst(onError, onValue));
+        if (!this.isError()) {
+            return onValue.apply(this.value());
+        } else {
+            return onError.apply(this.firstError());
+        }
     }
 
     /**
@@ -222,11 +228,14 @@ public interface ErrorOr<T> {
      * @param onValue Consumer to accept the value if this instance is a value.
      * @return A CompletableFuture that will complete when the operation is done.
      */
-    default CompletableFuture<Void> consumeAsync(Consumer<List<Error>> onError, Consumer<? super T> onValue) {
+    default CompletableFuture<Void> consumeAsync(
+        Function<List<Error>, CompletableFuture<Void>> onError,
+        Function<? super T, CompletableFuture<Void>> onValue
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.consumeAsync : onError is null");
         Objects.requireNonNull(onValue, "ErrorOr<T>.consumeAsync : onValue is null");
 
-        return CompletableFuture.runAsync(() -> this.consume(onError, onValue));
+        return this.isError() ? onError.apply(this.errors()) : onValue.apply(this.value());
     }
 
     /**
@@ -253,11 +262,18 @@ public interface ErrorOr<T> {
      * @param onValue Consumer to accept the value if this instance is a value.
      * @return A CompletableFuture that will complete when the operation is done.
      */
-    default CompletableFuture<Void> consumeFirstAsync(Consumer<Error> onError, Consumer<? super T> onValue) {
+    default CompletableFuture<Void> consumeFirstAsync(
+        Function<Error, CompletableFuture<Void>> onError,
+        Function<? super T, CompletableFuture<Void>> onValue
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.consumeFirstAsync : onError is null");
         Objects.requireNonNull(onValue, "ErrorOr<T>.consumeFirstAsync : onValue is null");
 
-        return CompletableFuture.runAsync(() -> this.consumeFirst(onError, onValue));
+        if (!this.isError()) {
+            return onValue.apply(this.value());
+        } else {
+            return onError.apply(this.firstError());
+        }
     }
 
     /**
@@ -277,16 +293,53 @@ public interface ErrorOr<T> {
     }
 
     /**
+     * Returns the value if present, otherwise applies the provided supplier to the errors and returns the result.
+     *
+     * @param onError Supplier to apply if this instance is an {@link Error}.
+     * @return The value if present, otherwise the result of the onError supplier.
+     * @throws NullPointerException if the onError supplier is null.
+     */
+    default T getOr(Supplier<? extends T> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.getOr : onError is null");
+
+        if (!isError()) {
+            return this.value();
+        }
+        return onError.get();
+    }
+
+    /**
      * Asynchronously returns the value if present, otherwise applies the provided function to the errors and returns the result.
      *
      * @param onError Function to apply if this instance is an {@link Error}.
      * @return A CompletableFuture containing the value if present, otherwise the result of the onError function.
      * @throws NullPointerException if the onError function is null.
      */
-    default CompletableFuture<T> getOrAsync(Function<List<Error>, ? extends T> onError) {
+    default CompletableFuture<T> getOrAsync(
+        Function<List<Error>, ? extends CompletableFuture<T>> onError
+    ) {
         Objects.requireNonNull(onError, "ErrorOr<T>.getOrAsync : onError is null");
 
-        return CompletableFuture.supplyAsync(() -> this.getOr(onError));
+        if (!isError()) {
+            return CompletableFuture.completedFuture(this.value());
+        }
+        return onError.apply(this.errors());
+    }
+
+    /**
+     * Asynchronously returns the value if present, otherwise applies the provided supplier to the errors and returns the result.
+     *
+     * @param onError Supplier to apply if this instance is an {@link Error}.
+     * @return A CompletableFuture containing the value if present, otherwise the result of the onError supplier.
+     * @throws NullPointerException if the onError supplier is null.
+     */
+    default CompletableFuture<T> getOrAsync(Supplier<? extends CompletableFuture<T>> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.getOrAsync : onError is null");
+
+        if (!isError()) {
+            return CompletableFuture.completedFuture(this.value());
+        }
+        return onError.get();
     }
 
     /**
@@ -300,6 +353,20 @@ public interface ErrorOr<T> {
 
         if (isError()) {
             onError.accept(this.errors());
+        }
+    }
+
+    /**
+     * Performs the given action if this instance is an {@link Error}.
+     *
+     * @param onError Supplier to execute if this instance is an {@link Error}.
+     * @throws NullPointerException if the onError supplier is null.
+     */
+    default void ifError(Supplier<Void> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.ifError : action is null");
+
+        if (isError()) {
+            onError.get();
         }
     }
 
@@ -319,6 +386,24 @@ public interface ErrorOr<T> {
             return this.value();
         }
         throw onError.apply(this.errors());
+    }
+
+    /**
+     * Returns the value if present, otherwise applies the provided supplier to the errors and throws the resulting exception.
+     *
+     * @param onError Supplier to apply to the list of errors to produce an exception.
+     * @param <E>     The type of exception to be thrown.
+     * @return The value if present.
+     * @throws E if this instance is an {@link Error}.
+     * @throws NullPointerException if the onError supplier is null.
+     */
+    default <E extends Throwable> T getOrThrow(Supplier<E> onError) throws E {
+        Objects.requireNonNull(onError, "ErrorOr<T>.getOrThrow : onError is null");
+
+        if (!isError()) {
+            return this.value();
+        }
+        throw onError.get();
     }
 
     /**
@@ -346,10 +431,15 @@ public interface ErrorOr<T> {
      * @return A CompletableFuture containing a new {@link ErrorOr} instance with the mapped value, or the current instance if it represents an {@link Error}.
      * @throws NullPointerException if the valueMapper function is null.
      */
-    default <R> CompletableFuture<ErrorOr<R>> mapAsync(Function<? super T, ? extends R> valueMapper) {
+    default <R> CompletableFuture<ErrorOr<R>> mapAsync(
+        Function<? super T, ? extends CompletableFuture<R>> valueMapper
+    ) {
         Objects.requireNonNull(valueMapper, "ErrorOr<T>.mapAsync : valueMapper is null");
 
-        return CompletableFuture.supplyAsync(() -> this.map(valueMapper));
+        if (!isError()) {
+            return valueMapper.apply(this.value()).thenApply(ErrorOr::of);
+        }
+        return CompletableFuture.completedFuture((ErrorOr<R>) this);
     }
 
     /**
@@ -363,8 +453,9 @@ public interface ErrorOr<T> {
         Objects.requireNonNull(errorMapper, "ErrorOr<T>.mapError : errorMapper is null");
 
         if (isError()) {
-            return ErrorOr.ofError(this.errors().stream()
-                    .map(errorMapper).collect(Collectors.toList()));
+            return ErrorOr.ofError(
+                this.errors().stream().map(errorMapper).collect(Collectors.toList())
+            );
         }
         return this;
     }
@@ -376,10 +467,27 @@ public interface ErrorOr<T> {
      * @return A CompletableFuture containing a new {@link ErrorOr} instance with the mapped errors, or the current instance if it represents a value.
      * @throws NullPointerException if the errorMapper function is null.
      */
-    default CompletableFuture<ErrorOr<T>> mapErrorAsync(Function<Error, Error> errorMapper) {
+    default CompletableFuture<ErrorOr<T>> mapErrorAsync(
+        Function<Error, CompletableFuture<Error>> errorMapper
+    ) {
         Objects.requireNonNull(errorMapper, "ErrorOr<T>.mapErrorAsync : errorMapper is null");
 
-        return CompletableFuture.supplyAsync(() -> this.mapError(errorMapper));
+        if (isError()) {
+            List<CompletableFuture<Error>> mappedErrorsFutures =
+                this.errors().stream().map(errorMapper).collect(Collectors.toList());
+
+            return CompletableFuture
+                .allOf(mappedErrorsFutures.toArray(new CompletableFuture[0]))
+                .thenApply(
+                    v ->
+                        mappedErrorsFutures
+                            .stream()
+                            .map(CompletableFuture::join)
+                            .collect(Collectors.toList())
+                )
+                .thenApply(ErrorOr::ofError);
+        }
+        return CompletableFuture.completedFuture(this);
     }
 
     /**
@@ -396,29 +504,190 @@ public interface ErrorOr<T> {
     }
 
     /**
+     * Returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the function.
+     *
+     * @param onError The function to apply to the errors to return an alternative value if this instance is an {@link Error}.
+     * @return This instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the function.
+     * @throws NullPointerException if the function is null.
+     */
+    default ErrorOr<T> or(Function<List<Error>, ? extends T> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.or : onError is null");
+
+        return !this.isError() ? this : ErrorOr.of(onError.apply(this.errors()));
+    }
+
+    /**
      * Returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the supplier.
      *
-     * @param supplier The supplier of an alternative {@link ErrorOr} to return if this instance is an {@link Error}.
+     * @param onError The supplier to provide an alternative value if this instance is an {@link Error}.
      * @return This instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the supplier.
      * @throws NullPointerException if the supplier is null.
      */
-    default ErrorOr<T> or(Supplier<? extends ErrorOr<? extends T>> supplier) {
-        Objects.requireNonNull(supplier, "ErrorOr<T>.or : supplier is null");
+    default ErrorOr<T> or(Supplier<? extends T> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.or : onError is null");
 
-        return !this.isError() ? this : (ErrorOr<T>) supplier.get();
+        return !this.isError() ? this : ErrorOr.of(onError.get());
+    }
+
+    /**
+     * Returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the function.
+     *
+     * @param onError The function to apply to the errors to return an alternative error if this instance is an {@link Error}.
+     * @return This instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the function.
+     * @throws NullPointerException if the function is null.
+     */
+    default ErrorOr<T> orError(Function<List<Error>, Error> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orError : onError is null");
+
+        return !this.isError() ? this : ErrorOr.ofError(onError.apply(this.errors()));
+    }
+
+    /**
+     * Returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the supplier.
+     *
+     * @param onError The supplier to provide an alternative error if this instance is an {@link Error}.
+     * @return This instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the supplier.
+     * @throws NullPointerException if the supplier is null.
+     */
+    default ErrorOr<T> orError(Supplier<Error> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orError : onError is null");
+
+        return !this.isError() ? this : ErrorOr.ofError(onError.get());
+    }
+
+    /**
+     * Returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the function.
+     *
+     * @param onError The function to apply to the errors to return an alternative iterable of errors if this instance is an {@link Error}.
+     * @return This instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the function.
+     * @throws NullPointerException if the function is null.
+     */
+    default ErrorOr<T> orErrors(Function<List<Error>, Iterable<Error>> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orErrors : onError is null");
+
+        return !this.isError() ? this : ErrorOr.ofError(onError.apply(this.errors()));
+    }
+
+    /**
+     * Returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the supplier.
+     *
+     * @param onError The supplier to provide an alternative iterable of errors if this instance is an {@link Error}.
+     * @return This instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the supplier.
+     * @throws NullPointerException if the supplier is null.
+     */
+    default ErrorOr<T> orErrors(Supplier<Iterable<Error>> onError) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orErrors : onError is null");
+
+        return !this.isError() ? this : ErrorOr.ofError(onError.get());
+    }
+
+    /**
+     * Asynchronously returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the function.
+     *
+     * @param onError The function to apply to the errors to return an alternative value if this instance is an {@link Error}.
+     * @return A CompletableFuture containing this instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the function.
+     * @throws NullPointerException if the function is null.
+     */
+    default CompletableFuture<ErrorOr<T>> orAsync(
+        Function<List<Error>, ? extends CompletableFuture<T>> onError
+    ) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orAsync : onError is null");
+
+        if (!this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
+        return onError.apply(this.errors()).thenApply(ErrorOr::of);
     }
 
     /**
      * Asynchronously returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the supplier.
      *
-     * @param supplier The supplier of an alternative {@link ErrorOr} to return if this instance is an {@link Error}.
+     * @param onError The supplier to provide an alternative value if this instance is an {@link Error}.
      * @return A CompletableFuture containing this instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the supplier.
      * @throws NullPointerException if the supplier is null.
      */
-    default CompletableFuture<ErrorOr<T>> orAsync(Supplier<? extends ErrorOr<? extends T>> supplier) {
-        Objects.requireNonNull(supplier, "ErrorOr<T>.orAsync : supplier is null");
+    default CompletableFuture<ErrorOr<T>> orAsync(
+        Supplier<? extends CompletableFuture<T>> onError
+    ) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orAsync : onError is null");
 
-        return CompletableFuture.supplyAsync(() -> this.or(supplier));
+        if (!this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
+        return onError.get().thenApply(ErrorOr::of);
+    }
+
+    /**
+     * Asynchronously returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the function.
+     *
+     * @param onError The function to apply to the errors to return an alternative error if this instance is an {@link Error}.
+     * @return A CompletableFuture containing this instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the function.
+     * @throws NullPointerException if the function is null.
+     */
+    default CompletableFuture<ErrorOr<T>> orErrorAsync(
+        Function<List<Error>, ? extends CompletableFuture<Error>> onError
+    ) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orErrorAsync : onError is null");
+
+        if (!this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
+        return onError.apply(this.errors()).thenApply(ErrorOr::ofError);
+    }
+
+    /**
+     * Asynchronously returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the supplier.
+     *
+     * @param onError The supplier to provide an alternative error if this instance is an {@link Error}.
+     * @return A CompletableFuture containing this instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the supplier.
+     * @throws NullPointerException if the supplier is null.
+     */
+    default CompletableFuture<ErrorOr<T>> orErrorAsync(
+        Supplier<? extends CompletableFuture<Error>> onError
+    ) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orErrorAsync : onError is null");
+
+        if (!this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
+        return onError.get().thenApply(ErrorOr::ofError);
+    }
+
+    /**
+     * Asynchronously returns this instance if it is not an {@link Error}, otherwise applies the provided function to the errors
+     * and returns a new {@link ErrorOr} instance containing the provided errors.
+     *
+     * @param onError Function to apply if this instance is an {@link Error}.
+     * @return A CompletableFuture containing this instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the function.
+     * @throws NullPointerException if the onError function is null.
+     */
+    default CompletableFuture<ErrorOr<T>> orErrorsAsync(
+        Function<List<Error>, ? extends CompletableFuture<Iterable<Error>>> onError
+    ) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orErrorAsync : onError is null");
+
+        if (!this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
+        return onError.apply(this.errors()).thenApply(errors -> ErrorOr.ofError(errors));
+    }
+
+    /**
+     * Asynchronously returns this instance if it is not an {@link Error}, otherwise returns the {@link ErrorOr} provided by the supplier.
+     *
+     * @param onError Supplier of an alternative {@link ErrorOr} to return if this instance is an {@link Error}.
+     * @return A CompletableFuture containing this instance if it is not an {@link Error}, otherwise the {@link ErrorOr} provided by the supplier.
+     * @throws NullPointerException if the onError supplier is null.
+     */
+    default CompletableFuture<ErrorOr<T>> orErrorsAsync(
+        Supplier<? extends CompletableFuture<Iterable<Error>>> onError
+    ) {
+        Objects.requireNonNull(onError, "ErrorOr<T>.orErrorAsync : onError is null");
+
+        if (!this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
+        return onError.get().thenApply(errors -> ErrorOr.ofError(errors));
     }
 
     /**
@@ -440,14 +709,21 @@ public interface ErrorOr<T> {
     /**
      * Asynchronously performs the given action if this instance is a value.
      *
-     * @param action Consumer to accept the value if this instance is a value.
+     * @param action Consumer to accept the CompletableFuture of the value if this instance is a value.
      * @return A CompletableFuture containing this instance.
      * @throws NullPointerException if the action is null.
      */
-    default CompletableFuture<ErrorOr<T>> onValueAsync(Consumer<? super T> action) {
+    default CompletableFuture<ErrorOr<T>> onValueAsync(
+        Consumer<? super CompletableFuture<T>> action
+    ) {
         Objects.requireNonNull(action, "ErrorOr<T>.onValueAsync : action is null");
 
-        return CompletableFuture.supplyAsync(() -> this.onValue(action));
+        if (!this.isError()) {
+            CompletableFuture<T> valueFuture = CompletableFuture.supplyAsync(this::value);
+            action.accept(valueFuture);
+            return valueFuture.thenApply(v -> this);
+        }
+        return CompletableFuture.completedFuture(this);
     }
 
     /**
@@ -469,15 +745,25 @@ public interface ErrorOr<T> {
     /**
      * Asynchronously performs the given action if this instance is an {@link Error}.
      *
-     * @param action Consumer to accept the list of errors if this instance is an {@link Error}.
+     * @param action Consumer to accept the CompletableFuture of the list of errors if this instance is an {@link Error}.
      * @return A CompletableFuture containing this instance.
      * @throws NullPointerException if the action is null.
      */
-    default CompletableFuture<ErrorOr<T>> onErrorAsync(Consumer<List<Error>> action) {
+    default CompletableFuture<ErrorOr<T>> onErrorAsync(
+        Consumer<? super CompletableFuture<List<Error>>> action
+    ) {
         Objects.requireNonNull(action, "ErrorOr<T>.onErrorAsync : action is null");
 
-        return CompletableFuture.supplyAsync(() -> this.onError(action));
+        if (this.isError()) {
+            CompletableFuture<List<Error>> errorFuture = CompletableFuture.supplyAsync(
+                this::errors
+            );
+            action.accept(errorFuture);
+            return errorFuture.thenApply(errors -> this);
+        }
+        return CompletableFuture.completedFuture(this);
     }
+
     /**
      * Returns this instance if it is an {@link Error}, otherwise applies the given predicate to the value.
      * If the predicate returns {@code true}, returns a new {@link ErrorOr} instance containing the provided errors.
@@ -487,7 +773,7 @@ public interface ErrorOr<T> {
      * @return This instance if it is an {@link Error}, otherwise a new {@link ErrorOr} instance containing the errors if the predicate is satisfied.
      * @throws NullPointerException if the predicate or errors are null.
      */
-    default ErrorOr<T> failIf(Predicate<? super T> predicate, List<Error> errors) {
+    default ErrorOr<T> failIf(Predicate<? super T> predicate, Iterable<Error> errors) {
         Objects.requireNonNull(predicate, "ErrorOr<T>.failIf : predicate is null");
         Objects.requireNonNull(errors, "ErrorOr<T>.failIf : errors is null");
 
@@ -495,20 +781,6 @@ public interface ErrorOr<T> {
             return this;
         }
         return predicate.test(this.value()) ? ErrorOr.ofError(errors) : this;
-    }
-
-    /**
-     * Returns this instance if it is an {@link Error}, otherwise applies the given predicate to the value.
-     * If the predicate returns {@code true}, returns a new {@link ErrorOr} instance containing the provided errors.
-     *
-     * @param predicate The predicate to apply to the value.
-     * @param errors    The iterable of errors to return if the predicate is satisfied.
-     * @return This instance if it is an {@link Error}, otherwise a new {@link ErrorOr} instance containing the errors if the predicate is satisfied.
-     * @throws NullPointerException if the predicate or errors are null.
-     */
-    default ErrorOr<T> failIf(Predicate<? super T> predicate, Iterable<Error> errors) {
-        return this.failIf(predicate, StreamSupport.stream(errors.spliterator(), false)
-                .collect(Collectors.toList()));
     }
 
     /**
@@ -533,25 +805,20 @@ public interface ErrorOr<T> {
      * @return A CompletableFuture containing this instance if it is an {@link Error}, otherwise a new {@link ErrorOr} instance containing the errors if the predicate is satisfied.
      * @throws NullPointerException if the predicate or errors are null.
      */
-    default CompletableFuture<ErrorOr<T>> failIfAsync(Predicate<? super T> predicate, List<Error> error) {
+    default CompletableFuture<ErrorOr<T>> failIfAsync(
+        Function<? super T, CompletableFuture<Boolean>> predicate,
+        Iterable<Error> error
+    ) {
         Objects.requireNonNull(predicate, "ErrorOr<T>.failIfAsync : predicate is null");
         Objects.requireNonNull(error, "ErrorOr<T>.failIfAsync : error is null");
 
-        return CompletableFuture.supplyAsync(() -> this.failIf(predicate, error));
-    }
+        if (this.isError()) {
+            return CompletableFuture.completedFuture(this);
+        }
 
-    /**
-     * Asynchronously returns this instance if it is an {@link Error}, otherwise applies the given predicate to the value.
-     * If the predicate returns {@code true}, returns a new {@link ErrorOr} instance containing the provided errors.
-     *
-     * @param predicate The predicate to apply to the value.
-     * @param errors    The iterable of errors to return if the predicate is satisfied.
-     * @return A CompletableFuture containing this instance if it is an {@link Error}, otherwise a new {@link ErrorOr} instance containing the errors if the predicate is satisfied.
-     * @throws NullPointerException if the predicate or errors are null.
-     */
-    default CompletableFuture<ErrorOr<T>> failIfAsync(Predicate<? super T> predicate, Iterable<Error> errors) {
-        return this.failIfAsync(predicate, StreamSupport.stream(errors.spliterator(), false)
-                .collect(Collectors.toList()));
+        return predicate
+            .apply(this.value())
+            .thenApply(predicateResult -> predicateResult ? ErrorOr.ofError(error) : this);
     }
 
     /**
@@ -563,7 +830,10 @@ public interface ErrorOr<T> {
      * @return A CompletableFuture containing this instance if it is an {@link Error}, otherwise a new {@link ErrorOr} instance containing the errors if the predicate is satisfied.
      * @throws NullPointerException if the predicate or errors are null.
      */
-    default CompletableFuture<ErrorOr<T>> failIfAsync(Predicate<? super T> predicate, Error... errors) {
+    default CompletableFuture<ErrorOr<T>> failIfAsync(
+        Function<? super T, CompletableFuture<Boolean>> predicate,
+        Error... errors
+    ) {
         return this.failIfAsync(predicate, List.of(errors));
     }
 
@@ -583,7 +853,6 @@ public interface ErrorOr<T> {
      * @author Pablo Lamtenzan
      */
     final class Success<T> implements ErrorOr<T> {
-
         private final T value;
 
         /**
@@ -594,7 +863,9 @@ public interface ErrorOr<T> {
          */
         private Success(T value) {
             if (value == null) {
-                throw new IllegalArgumentException("Cannot create value instance of ErrorOr<T> -> 'value' is null.");
+                throw new IllegalArgumentException(
+                    "Cannot create value instance of ErrorOr<T> -> 'value' is null."
+                );
             }
             this.value = value;
         }
@@ -611,17 +882,24 @@ public interface ErrorOr<T> {
 
         @Override
         public List<Error> errors() {
-            throw new UnsupportedOperationException("ErrorOr<T>.errors not callable in a value instance.");
+            throw new UnsupportedOperationException(
+                "ErrorOr<T>.errors not callable in a value instance."
+            );
         }
 
         @Override
         public Error firstError() {
-            throw new UnsupportedOperationException("ErrorOr<T>.firstError not callable in a value instance.");
+            throw new UnsupportedOperationException(
+                "ErrorOr<T>.firstError not callable in a value instance."
+            );
         }
 
         @Override
         public boolean equals(Object that) {
-            return (that == this) || (that instanceof Success<?> && Objects.equals(value, ((Success<?>) that).value));
+            return (
+                (that == this) ||
+                (that instanceof Success<?> && Objects.equals(value, ((Success<?>) that).value))
+            );
         }
 
         @Override
@@ -642,7 +920,6 @@ public interface ErrorOr<T> {
      * @author Pablo Lamtenzan
      */
     final class Failure<T> implements ErrorOr<T> {
-
         private final List<Error> errors;
 
         /**
@@ -652,13 +929,7 @@ public interface ErrorOr<T> {
          * @throws IllegalArgumentException if errors is null or empty.
          */
         private Failure(List<Error> errors) {
-            if (errors == null) {
-                throw new IllegalArgumentException("Cannot create error instance of ErrorOr<T> -> 'errors' is null.");
-            }
-            if (errors.isEmpty()) {
-                throw new IllegalArgumentException("Cannot create error instance of ErrorOr<T> -> 'errors' is empty. Provide at least one error.");
-            }
-            this.errors = errors;
+            this.errors = validateErrors(errors);
         }
 
         /**
@@ -667,7 +938,15 @@ public interface ErrorOr<T> {
          * @param errors The iterable of errors.
          */
         private Failure(Iterable<Error> errors) {
-            this(StreamSupport.stream(errors.spliterator(), false).collect(Collectors.toList()));
+            this(
+                validateErrors(
+                    errors != null
+                        ? StreamSupport
+                            .stream(errors.spliterator(), false)
+                            .collect(Collectors.toList())
+                        : null
+                )
+            );
         }
 
         /**
@@ -676,7 +955,23 @@ public interface ErrorOr<T> {
          * @param errors The array of errors.
          */
         private Failure(Error... errors) {
-            this(List.of(errors));
+            this(validateErrors(errors != null ? List.of(errors) : null));
+        }
+
+        private static List<Error> validateErrors(List<Error> errors) {
+            if (errors == null) {
+                throw new IllegalArgumentException(
+                    "Cannot create error instance of ErrorOr<T> -> 'errors' is null."
+                );
+            }
+
+            if (errors.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Cannot create error instance of ErrorOr<T> -> 'errors' is empty. Provide at least one error."
+                );
+            }
+
+            return errors;
         }
 
         @Override
@@ -686,7 +981,9 @@ public interface ErrorOr<T> {
 
         @Override
         public T value() {
-            throw new UnsupportedOperationException("ErrorOr<T>.value not callable in an error instance.");
+            throw new UnsupportedOperationException(
+                "ErrorOr<T>.value not callable in an error instance."
+            );
         }
 
         @Override
@@ -707,18 +1004,22 @@ public interface ErrorOr<T> {
             if (this == that) {
                 return true;
             }
+
             if (that == null || this.getClass() != that.getClass()) {
                 return false;
             }
+
             final ErrorOr<?> thatErrorOr = (ErrorOr<?>) that;
             if (this.errors.size() != thatErrorOr.errors().size()) {
                 return false;
             }
+
             for (int i = 0; i < this.errors.size(); i++) {
                 if (!this.errors.get(i).equals(thatErrorOr.errors().get(i))) {
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -729,9 +1030,10 @@ public interface ErrorOr<T> {
 
         @Override
         public String toString() {
-            return errors.stream()
-                    .map(error -> String.format("%d: %s", errors.indexOf(error), error))
-                    .collect(Collectors.joining("\n"));
+            return errors
+                .stream()
+                .map(error -> String.format("%d: %s", errors.indexOf(error), error))
+                .collect(Collectors.joining("\n"));
         }
     }
 }
