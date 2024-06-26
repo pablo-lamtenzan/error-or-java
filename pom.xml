@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.pablolamtenzan</groupId>
+    <groupId>dev.pablolamtenzan</groupId>
     <artifactId>error-or</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -44,7 +44,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
-        <gpg.keyname>${env.GPG_KEY_NAME}</gpg.keyname>
+        <junit.jupiter.version>5.8.2</junit.jupiter.version>
+        <assertj.version>3.21.0</assertj.version>
+        <maven.surefire.plugin.version>3.0.0-M5</maven.surefire.plugin.version>
     </properties>
 
     <build>
@@ -61,8 +63,24 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                    <excludes>
+                        <!-- Test discovery within nested classes -->
+                        <exclude></exclude>
+                    </excludes>
+                    <useModulePath>false</useModulePath>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6.7</version>
+                <version>3.2.4</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -73,13 +91,55 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <keyname>${env.GPG_KEY_NAME}</keyname>
+                    <keyname>${gpg.keyname}</keyname>
                     <gpgArguments>
                         <arg>--pinentry-mode</arg>
                         <arg>loopback</arg>
                     </gpgArguments>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>com.hubspot.maven.plugins</groupId>
+                <artifactId>prettier-maven-plugin</artifactId>
+                <version>0.22</version>
+                <executions>
+                    <execution>
+                        <id>prettier-format</id>
+                        <goals>
+                            <goal>write</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+    </dependencies>
 </project>

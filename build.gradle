@@ -4,7 +4,7 @@ plugins {
     id 'signing'
 }
 
-group = 'com.pablolamtenzan'
+group = 'dev.pablolamtenzan'
 version = '1.0.0'
 
 repositories {
@@ -13,6 +13,15 @@ repositories {
 
 sourceCompatibility = '17'
 targetCompatibility = '17'
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
 
 publishing {
     publications {
