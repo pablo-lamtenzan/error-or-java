@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - test-workflow
 
 jobs:
   publish:
@@ -60,7 +61,7 @@ jobs:
         if: success()
         run: |
           export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-          mvn deploy --settings ~/.m2/settings.xml
+          mvn deploy --settings ~/.m2/settings.xml -X
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
