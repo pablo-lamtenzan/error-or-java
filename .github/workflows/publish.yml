@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - test-workflow
 
 jobs:
   publish:
@@ -27,8 +26,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Display Environment Variables
+        run: |
+          echo "OSSRH_USERNAME=${{ env.OSSRH_USERNAME }}"
+          echo "OSSRH_TOKEN=${{ env.OSSRH_TOKEN }}"
+          echo "GITHUB_ACTOR=${{ env.GITHUB_ACTOR }}"
+          ls -la ~/.m2
+          cat ~/.m2/settings.xml || echo "No settings.xml found"
+
       - name: Copy Maven settings
         run: mkdir -p ~/.m2 && cp .github/maven/settings.xml ~/.m2/settings.xml
+
+      - name: Display Maven settings.xml
+        run: cat ~/.m2/settings.xml
 
       - name: Decrypt GPG key
         run: |
@@ -51,17 +61,11 @@ jobs:
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Set up Maven Central Repository
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
       - name: Deploy to Maven Central
         if: success()
         run: |
           export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-          mvn deploy --settings ~/.m2/settings.xml -X
+          mvn deploy -X --settings ~/.m2/settings.xml
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
