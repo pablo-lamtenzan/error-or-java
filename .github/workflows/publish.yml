@@ -27,7 +27,9 @@ jobs:
           java-version: '17'
 
       - name: Copy Maven settings
-        run: mkdir -p ~/.m2 && cp .github/maven/settings.xml ~/.m2/settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cp .github/maven/settings.xml ~/.m2/settings.xml
 
       - name: Decrypt GPG key
         run: |
@@ -40,21 +42,13 @@ jobs:
           echo "use-agent" >> ~/.gnupg/gpg.conf
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           echo RELOADAGENT | gpg-connect-agent
-        env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Build and Test
         run: |
           export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-          mvn clean verify
+          mvn clean verify --settings ~/.m2/settings.xml
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-
-      - name: Set up Maven Central Repository
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
       - name: Deploy to Maven Central
         if: success()
