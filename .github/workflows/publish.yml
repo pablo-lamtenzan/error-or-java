@@ -37,10 +37,10 @@ jobs:
 
       - name: Verify environment variables
         run: |
-          echo "OSSRH_USERNAME=$OSSRH_USERNAME"
-          echo "OSSRH_TOKEN=***"
-          echo "GITHUB_ACTOR=$GITHUB_ACTOR"
-          echo "GITHUB_TOKEN=***"
+          echo "OSSRH_USERNAME=${{ secrets.OSSRH_USERNAME }}"
+          echo "OSSRH_TOKEN=${{ secrets.OSSRH_TOKEN }}"
+          echo "GITHUB_ACTOR=${{ github.actor }}"
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"
 
       - name: Decrypt GPG key
         run: |
