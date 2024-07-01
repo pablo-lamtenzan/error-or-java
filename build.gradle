@@ -2,85 +2,120 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'signing'
+    id 'com.github.hierynomus.license' version '0.15.0'
+    id 'org.jacoco' version '0.8.7'
+    id 'com.diffplug.spotless' version '5.15.0'
 }
 
 group = 'dev.pablolamtenzan'
 version = '1.0.0'
+description = 'An ErrorOr implementation for Java'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 repositories {
     mavenCentral()
 }
 
-sourceCompatibility = '17'
-targetCompatibility = '17'
-
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0-M2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.0-M2'
+    testImplementation 'org.assertj:assertj-core:3.26.0'
 }
 
 test {
     useJUnitPlatform()
 }
 
+jacoco {
+    toolVersion = "0.8.7"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
+}
+
+task javadocJar(type: Jar) {
+    dependsOn javadoc
+    from javadoc.destinationDir
+    archiveClassifier.set('javadoc')
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    archiveClassifier.set('sources')
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            from components.java
+            // other configurations...
             pom {
-                name = 'ErrorOr'
-                description = 'An ErrorOr implementation for Java'
-                url = 'https://github.com/pablo-lamtenzan/error-or-java'
-
+                name.set('ErrorOr')
+                description.set('An ErrorOr implementation for Java')
+                url.set('https://github.com/pablo-lamtenzan/error-or-java')
                 licenses {
                     license {
-                        name = 'Apache License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                        distribution = 'repo'
+                        name.set('MIT License')
+                        url.set('https://opensource.org/licenses/MIT')
                     }
                 }
-
                 developers {
                     developer {
-                        id = 'pablo-lamtenzan'
-                        name = 'Pablo Lamtenzan'
-                        email = 'pablolamtenzan.dev@proton.me'
+                        id.set('pablo-lamtenzan')
+                        name.set('Pablo Lamtenzan')
+                        email.set('pablolamtenzan.dev@proton.me')
                     }
                 }
-
                 scm {
-                    connection = 'scm:git@github.com:pablo-lamtenzan/error-or-java.git'
-                    developerConnection = 'scm:git@github.com:pablo-lamtenzan/error-or-java.git'
-                    url = 'https://github.com/pablo-lamtenzan/error-or-java'
+                    connection.set('scm:git@github.com:pablo-lamtenzan/error-or-java.git')
+                    developerConnection.set('scm:git@github.com:pablo-lamtenzan/error-or-java.git')
+                    url.set('https://github.com/pablo-lamtenzan/error-or-java')
                 }
-
                 issueManagement {
-                    system = 'GitHub'
-                    url = 'https://github.com/pablo-lamtenzan/error-or-java/issues'
+                    system.set('GitHub')
+                    url.set('https://github.com/pablo-lamtenzan/error-or-java/issues')
                 }
             }
         }
     }
-
     repositories {
         maven {
             name = 'GitHubPackages'
-            url = uri('https://maven.pkg.github.com/pablo-lamtenzan/error-or-java')
+            url = uri("https://maven.pkg.github.com/pablo-lamtenzan/error-or-java")
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
                 password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+        maven {
+            name = 'sonatype'
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_TOKEN")
             }
         }
     }
 }
 
 signing {
-    useGpgCmd()
+    useInMemoryPgpKeys(System.getenv("GPG_PRIVATE_KEY"), System.getenv("GPG_PASSPHRASE"))
     sign publishing.publications.mavenJava
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    sourceCompatibility = '17'
-    targetCompatibility = '17'
+tasks.withType(Javadoc).configureEach {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addStringOption('encoding', 'UTF-8')
+    options.addStringOption('charSet', 'UTF-8')
 }
