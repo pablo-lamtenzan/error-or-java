@@ -61,6 +61,11 @@
             <name>OSSRH Snapshot Repository</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </snapshotRepository>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/pablo-lamtenzan/error-or-java</url>
+        </repository>
     </distributionManagement>
 
     <build>
