@@ -254,7 +254,13 @@ implementation 'dev.pablolamtenzan:error-or:1.0.0'
 
 ### PGP Public Key
 
-For verifying the integrity of the project, you can use the PGP public key provided. You can find this key in the [PGP-PUBLIC-KEY](./PGP-PUBLIC-KEY.asc) file in the repository.
+For verifying the integrity of the project, you can use the PGP public key provided. The public key is now available on a key server. You can retrieve the public key using the following command:
+
+```sh
+gpg --keyserver keyserver.ubuntu.com --search-keys pablolamtenzan.dev@proton.me
+```
+
+Alternatively, you can find the key in the [PGP-PUBLIC-KEY](./PGP-PUBLIC-KEY.asc) file in the repository.
 
 ## Creating an ErrorOr instance
 
