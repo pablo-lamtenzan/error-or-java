@@ -27,19 +27,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Display Environment Variables
-        run: |
-          echo "OSSRH_USERNAME=${{ env.OSSRH_USERNAME }}"
-          echo "OSSRH_TOKEN=${{ env.OSSRH_TOKEN }}"
-          echo "GITHUB_ACTOR=${{ env.GITHUB_ACTOR }}"
-          ls -la ~/.m2
-          cat ~/.m2/settings.xml || echo "No settings.xml found"
-
       - name: Copy Maven settings
-        run: mkdir -p ~/.m2 && cp .github/maven/settings.xml ~/.m2/settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cp .github/maven/settings.xml ~/.m2/settings.xml
 
       - name: Display Maven settings.xml
         run: cat ~/.m2/settings.xml
+
+      - name: Verify environment variables
+        run: |
+          echo "OSSRH_USERNAME=$OSSRH_USERNAME"
+          echo "OSSRH_TOKEN=***"
+          echo "GITHUB_ACTOR=$GITHUB_ACTOR"
+          echo "GITHUB_TOKEN=***"
 
       - name: Decrypt GPG key
         run: |
@@ -58,7 +59,7 @@ jobs:
       - name: Build and Test
         run: |
           export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-          mvn clean verify
+          mvn clean verify --settings ~/.m2/settings.xml
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
