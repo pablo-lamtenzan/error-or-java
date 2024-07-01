@@ -32,16 +32,6 @@ jobs:
           mkdir -p ~/.m2
           cp .github/maven/settings.xml ~/.m2/settings.xml
 
-      - name: Display Maven settings.xml
-        run: cat ~/.m2/settings.xml
-
-      - name: Verify environment variables
-        run: |
-          echo "OSSRH_USERNAME=${{ secrets.OSSRH_USERNAME }}"
-          echo "OSSRH_TOKEN=${{ secrets.OSSRH_TOKEN }}"
-          echo "GITHUB_ACTOR=${{ github.actor }}"
-          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}"
-
       - name: Decrypt GPG key
         run: |
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
@@ -53,8 +43,6 @@ jobs:
           echo "use-agent" >> ~/.gnupg/gpg.conf
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           echo RELOADAGENT | gpg-connect-agent
-        env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Build and Test
         run: |
@@ -67,7 +55,7 @@ jobs:
         if: success()
         run: |
           export MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}
-          mvn deploy -X --settings ~/.m2/settings.xml
+          mvn deploy --settings ~/.m2/settings.xml
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
