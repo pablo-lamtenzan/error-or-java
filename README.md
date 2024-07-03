@@ -262,8 +262,6 @@ gpg --keyserver keyserver.ubuntu.com --search-keys pablolamtenzan.dev@proton.me
 
 Alternatively, you can find the key in the [PGP-PUBLIC-KEY](./PGP-PUBLIC-KEY.asc) file in the repository.
 
-Got it! Here's a more concise version:
-
 ## Creating an ErrorOr instance
 
 The `ErrorOr` class provides multiple ways to create instances representing either a successful value or one or more errors. Below are the different methods available for creating `ErrorOr` instances.
