@@ -20,12 +20,12 @@
 <dependency>
     <groupId>dev.pablolamtenzan</groupId>
     <artifactId>error-or</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
 ```groovy
-implementation 'dev.pablolamtenzan:error-or:1.0.0'
+implementation 'dev.pablolamtenzan:error-or:1.1.1'
 ```
 
 - [Star the Project ⭐](#star-the-project-)
@@ -240,7 +240,7 @@ Add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>dev.pablolamtenzan</groupId>
     <artifactId>error-or</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -249,7 +249,7 @@ Add the following dependency to your `pom.xml`:
 Add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'dev.pablolamtenzan:error-or:1.0.0'
+implementation 'dev.pablolamtenzan:error-or:1.1.1'
 ```
 
 ### PGP Public Key
@@ -262,6 +262,8 @@ gpg --keyserver keyserver.ubuntu.com --search-keys pablolamtenzan.dev@proton.me
 
 Alternatively, you can find the key in the [PGP-PUBLIC-KEY](./PGP-PUBLIC-KEY.asc) file in the repository.
 
+Got it! Here's a more concise version:
+
 ## Creating an ErrorOr instance
 
 The `ErrorOr` class provides multiple ways to create instances representing either a successful value or one or more errors. Below are the different methods available for creating `ErrorOr` instances.
@@ -272,6 +274,13 @@ The `of` factory method is used to create an `ErrorOr` instance that holds a suc
 
 ```java
 ErrorOr<Integer> successResult = ErrorOr.of(5);
+```
+
+The `of` factory method can also be used to create an `ErrorOr` instance by copying another `ErrorOr` instance.
+
+```java
+ErrorOr<String> stringSuccess = ErrorOr.of("Success");
+ErrorOr<String> anotherStringSuccess = ErrorOr.of(stringSuccess);
 ```
 
 ### Using `ofError`
@@ -302,6 +311,13 @@ List<Error> errors = List.of(
     Error.conflict("Conflict Error", "A conflict occurred.")
 );
 ErrorOr<Integer> errorResult = ErrorOr.ofError(errors);
+```
+
+4. **Other ErrorOr instance**
+
+```java
+ErrorOr<String> stringErrorOr = ErrorOr.ofError(Error.validation("Invalid Input", "The provided input is invalid."));
+ErrorOr<Integer> integerErrorOr = ErrorOr.ofError(stringErrorOr);
 ```
 
 ## Properties
