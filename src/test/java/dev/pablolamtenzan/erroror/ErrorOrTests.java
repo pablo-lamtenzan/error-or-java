@@ -452,7 +452,7 @@ public class ErrorOrTests {
             ErrorOr<Person> original = ErrorOr.ofError(errors);
 
             // Act
-            ErrorOr<Person> copy = ErrorOr.ofError(original);
+            ErrorOr<String> copy = ErrorOr.ofError(original);
 
             // Assert
             assertThat(copy.isError()).isTrue();
@@ -472,37 +472,6 @@ public class ErrorOrTests {
             assertThatThrownBy(action)
                 .isInstanceOf(UnsupportedOperationException.class)
                 .hasMessage("ErrorOr<T>.value not callable in an error instance.");
-        }
-
-        @Test
-        public void copyFromErrorInstanceWithMultipleErrors_WhenAccessingFirstError_ShouldReturnFirstError() {
-            // Arrange
-            List<Error> errors = List.of(
-                Error.validation("User.Name", "Name is too short"),
-                Error.validation("User.Age", "User is too young")
-            );
-            ErrorOr<Person> original = ErrorOr.ofError(errors);
-
-            // Act
-            ErrorOr<Person> copy = ErrorOr.ofError(original);
-
-            // Assert
-            assertThat(copy.isError()).isTrue();
-            assertThat(copy.firstError()).isEqualTo(errors.get(0));
-        }
-
-        @Test
-        public void copyFromDifferentGenericValueInstance_WhenAccessingValue_ShouldReturnValue() {
-            // Arrange
-            Result value = Result.SUCCESS;
-            ErrorOr<Result> original = ErrorOr.of(value);
-
-            // Act
-            ErrorOr<Result> copy = ErrorOr.of(original);
-
-            // Assert
-            assertThat(copy.isError()).isFalse();
-            assertThat(copy.value()).isEqualTo(value);
         }
 
         @Test

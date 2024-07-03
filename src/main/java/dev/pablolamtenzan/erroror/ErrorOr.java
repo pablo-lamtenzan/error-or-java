@@ -100,14 +100,14 @@ public interface ErrorOr<T> {
     }
 
     /**
-     * Constructs an instance representing multiple errors by copying another instance.
+     * Constructs an instance representing multiple errors by copying another ErrorOr instance.
      *
      * @param that The instance to copy.
      * @param <U>  The type of the value.
      * @return A new instance representing the errors.
      * @throws UnsupportedOperationException if the given instance is not an error.
      */
-    static <U> ErrorOr<U> ofError(ErrorOr<U> that) {
+    static <U> ErrorOr<U> ofError(ErrorOr<?> that) {
         if (!that.isError()) {
             throw new UnsupportedOperationException("ErrorOr.ofError requires an error instance.");
         }
