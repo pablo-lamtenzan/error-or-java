@@ -5,11 +5,11 @@
 
     <groupId>dev.pablolamtenzan</groupId>
     <artifactId>error-or</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
 
     <name>ErrorOr</name>
-    <description>An ErrorOr implementation for Java</description>
+    <description>A simple, fluent discriminated union of an error or a result. Java implementation of the original C# ErrorOr.</description>
     <url>https://github.com/pablo-lamtenzan/error-or-java</url>
 
     <licenses>

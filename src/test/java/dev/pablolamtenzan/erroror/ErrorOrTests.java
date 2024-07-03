@@ -415,6 +415,111 @@ public class ErrorOrTests {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Cannot create value instance of ErrorOr<T> -> 'value' is null.");
         }
+
+        @Test
+        public void copyFromValueInstance_WhenAccessingValue_ShouldReturnValue() {
+            // Arrange
+            List<String> value = List.of("value");
+            ErrorOr<List<String>> original = ErrorOr.of(value);
+
+            // Act
+            ErrorOr<List<String>> copy = ErrorOr.of(original);
+
+            // Assert
+            assertThat(copy.isError()).isFalse();
+            assertThat(copy.value()).isSameAs(value);
+        }
+
+        @Test
+        public void copyFromValueInstance_WhenAccessingErrors_ShouldThrow() {
+            // Arrange
+            List<String> value = List.of("value");
+            ErrorOr<List<String>> original = ErrorOr.of(value);
+
+            // Act
+            ThrowableAssert.ThrowingCallable action = ErrorOr.of(original)::errors;
+
+            // Assert
+            assertThatThrownBy(action)
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessage("ErrorOr<T>.errors not callable in a value instance.");
+        }
+
+        @Test
+        public void copyFromErrorInstance_WhenAccessingErrors_ShouldReturnErrors() {
+            // Arrange
+            List<Error> errors = List.of(Error.validation("User.Name", "Name is too short"));
+            ErrorOr<Person> original = ErrorOr.ofError(errors);
+
+            // Act
+            ErrorOr<Person> copy = ErrorOr.ofError(original);
+
+            // Assert
+            assertThat(copy.isError()).isTrue();
+            assertThat(copy.errors()).containsExactlyElementsOf(errors);
+        }
+
+        @Test
+        public void copyFromErrorInstance_WhenAccessingValue_ShouldThrow() {
+            // Arrange
+            List<Error> errors = List.of(Error.validation("User.Name", "Name is too short"));
+            ErrorOr<Person> original = ErrorOr.ofError(errors);
+
+            // Act
+            ThrowableAssert.ThrowingCallable action = ErrorOr.ofError(original)::value;
+
+            // Assert
+            assertThatThrownBy(action)
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessage("ErrorOr<T>.value not callable in an error instance.");
+        }
+
+        @Test
+        public void copyFromErrorInstanceWithMultipleErrors_WhenAccessingFirstError_ShouldReturnFirstError() {
+            // Arrange
+            List<Error> errors = List.of(
+                Error.validation("User.Name", "Name is too short"),
+                Error.validation("User.Age", "User is too young")
+            );
+            ErrorOr<Person> original = ErrorOr.ofError(errors);
+
+            // Act
+            ErrorOr<Person> copy = ErrorOr.ofError(original);
+
+            // Assert
+            assertThat(copy.isError()).isTrue();
+            assertThat(copy.firstError()).isEqualTo(errors.get(0));
+        }
+
+        @Test
+        public void copyFromDifferentGenericValueInstance_WhenAccessingValue_ShouldReturnValue() {
+            // Arrange
+            Result value = Result.SUCCESS;
+            ErrorOr<Result> original = ErrorOr.of(value);
+
+            // Act
+            ErrorOr<Result> copy = ErrorOr.of(original);
+
+            // Assert
+            assertThat(copy.isError()).isFalse();
+            assertThat(copy.value()).isEqualTo(value);
+        }
+
+        @Test
+        public void copyFromDifferentGenericErrorInstance_WhenAccessingErrors_ShouldReturnErrors() {
+            // Arrange
+            List<Error> errors = List.of(
+                Error.validation("Operation", "Failed due to unknown reasons")
+            );
+            ErrorOr<Result> original = ErrorOr.ofError(errors);
+
+            // Act
+            ErrorOr<Result> copy = ErrorOr.ofError(original);
+
+            // Assert
+            assertThat(copy.isError()).isTrue();
+            assertThat(copy.errors()).containsExactlyElementsOf(errors);
+        }
     }
 
     public static class ErrorOrEqualityTests {

@@ -8,8 +8,8 @@ plugins {
 }
 
 group = 'dev.pablolamtenzan'
-version = '1.0.0'
-description = 'An ErrorOr implementation for Java'
+version = '1.1.0'
+description = 'A simple, fluent discriminated union of an error or a result. Java implementation of the original C# ErrorOr.'
 sourceCompatibility = '17'
 targetCompatibility = '17'
 

@@ -61,6 +61,21 @@ public interface ErrorOr<T> {
     }
 
     /**
+     * Constructs an instance representing a successful value by copying another instance.
+     *
+     * @param that The instance to copy.
+     * @param <U>  The type of the value.
+     * @return A new instance representing the value.
+     * @throws UnsupportedOperationException if the given instance is an error.
+     */
+    static <U> ErrorOr<U> of(ErrorOr<U> that) {
+        if (that.isError()) {
+            throw new UnsupportedOperationException("ErrorOr.of requires a value instance.");
+        }
+        return ErrorOr.of(that.value());
+    }
+
+    /**
      * Constructs an instance representing multiple errors.
      *
      * @param errors The errors.
@@ -82,6 +97,21 @@ public interface ErrorOr<T> {
      */
     static <U> ErrorOr<U> ofError(Iterable<Error> errors) {
         return new Failure<>(errors);
+    }
+
+    /**
+     * Constructs an instance representing multiple errors by copying another instance.
+     *
+     * @param that The instance to copy.
+     * @param <U>  The type of the value.
+     * @return A new instance representing the errors.
+     * @throws UnsupportedOperationException if the given instance is not an error.
+     */
+    static <U> ErrorOr<U> ofError(ErrorOr<U> that) {
+        if (!that.isError()) {
+            throw new UnsupportedOperationException("ErrorOr.ofError requires an error instance.");
+        }
+        return ErrorOr.ofError(that.errors());
     }
 
     /**
